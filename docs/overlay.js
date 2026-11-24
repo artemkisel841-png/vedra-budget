@@ -1,26 +1,26 @@
-'use strict';
+import { createBudgetPainter } from './paint-amount.js';
 
 const rawUrl = 'https://raw.githubusercontent.com/artemkisel841-png/vedra-budget/refs/heads/budget-data/budget.json';
 const apiUrl = new URL('https://api.github.com/repos/artemkisel841-png/vedra-budget/contents/budget.json?ref=budget-data');
 const number = document.getElementById('number');
 const currency = document.getElementById('currency');
 const output = number.parentElement;
+const photo = document.getElementById('sign-photo');
+const canvas = document.getElementById('amount-art');
+const painter = photo.decode().then(() => createBudgetPainter(photo, canvas));
 const format = new Intl.NumberFormat('ru-RU');
 let revision = -1;
 
 function showBudget(amount) {
   const unset = amount === null;
-  number.textContent = unset ? '—' : format.format(amount).replace('-', '−');
+  number.textContent = unset ? '—' : format.format(amount).replace('-', '−').replace(/\s/g, '\u202f');
   currency.hidden = unset;
   if (unset) {
     output.setAttribute('aria-label', 'Сумма ещё не задана');
-    output.style.removeProperty('--number-size');
   } else {
     output.removeAttribute('aria-label');
-    const digits = String(Math.abs(amount)).length;
-    const signWidth = amount < 0 ? 2 : 1;
-    output.style.setProperty('--number-size', `${Math.min(19.5, 145 / (digits + signWidth))}cqw`);
   }
+  painter.then((draw) => draw(number.textContent, !currency.hidden)).catch(console.error);
 }
 
 async function acceptBudget(response) {
@@ -68,5 +68,6 @@ async function refreshApi() {
   }
 }
 
+showBudget(null);
 refreshRaw();
 refreshApi();

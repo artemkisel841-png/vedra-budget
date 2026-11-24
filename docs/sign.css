@@ -9,24 +9,24 @@ body {
 
 .sign {
   position: relative;
-  container-type: inline-size;
   width: min(100vw, 189.7vh);
 }
 
 .sign img { display: block; width: 100%; height: auto; }
 
-.amount {
+.sign canvas {
   position: absolute;
-  top: 55.2%;
-  left: 50%;
-  transform: translateX(-50%);
-  color: #c5c1be;
-  opacity: .94;
-  filter: blur(.26cqw);
-  font: 700 var(--number-size, 19.5cqw)/.88 Arial, sans-serif;
-  font-variant-numeric: lining-nums tabular-nums;
-  letter-spacing: -.015em;
-  white-space: nowrap;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
-.amount small { font-size: .7em; letter-spacing: 0; }
+.amount {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

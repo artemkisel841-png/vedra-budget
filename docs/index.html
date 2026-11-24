@@ -4,12 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ВЕДРА</title>
-  <link rel="stylesheet" href="sign.css?v=2">
-  <script src="overlay.js" defer></script>
+  <link rel="stylesheet" href="sign.css?v=3">
+  <script src="overlay.js?v=3" type="module"></script>
 </head>
 <body>
   <main class="sign">
-    <img src="sign.png" width="700" height="369" alt="ВЕДРА">
+    <img id="sign-photo" src="sign.png" width="700" height="369" alt="ВЕДРА">
+    <canvas id="amount-art" aria-hidden="true"></canvas>
     <output class="amount" aria-live="polite" aria-label="Сумма ещё не задана">
       <span id="number">—</span><small id="currency" hidden> ₽</small>
     </output>

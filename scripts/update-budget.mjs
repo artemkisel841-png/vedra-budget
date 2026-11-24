@@ -26,8 +26,6 @@ const headers = {
   'Accept': 'application/vnd.github+json',
   'Content-Type': 'application/json',
 };
-const format = new Intl.NumberFormat('ru-RU');
-
 for (let attempt = 0; ; attempt += 1) {
   const response = await fetch(readEndpoint, { headers, signal: AbortSignal.timeout(12000) });
   if (!response.ok) throw new Error(`GitHub не прочитал сумму (HTTP ${response.status}).`);
@@ -58,7 +56,7 @@ for (let attempt = 0; ; attempt += 1) {
   const updated = await fetch(endpoint, {
     method: 'PUT', headers, signal: AbortSignal.timeout(12000),
     body: JSON.stringify({
-      message: `${operation} ${format.format(value)} ₽`,
+      message: `${operation} сумму`,
       branch,
       sha: file.sha,
       content: Buffer.from(`${JSON.stringify(next)}\n`).toString('base64'),
@@ -66,7 +64,7 @@ for (let attempt = 0; ; attempt += 1) {
   });
 
   if (updated.ok) {
-    console.log(`Сохранено: ${format.format(amount)} ₽.`);
+    console.log('Сумма сохранена.');
     break;
   }
   if (updated.status !== 409 || attempt >= 6) {

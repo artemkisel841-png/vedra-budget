@@ -1,5 +1,5 @@
 name: Изменить сумму «ВЕДРА»
-run-name: ${{ inputs.operation }} ${{ inputs.amount }} ₽ · ${{ github.actor }}
+run-name: ${{ inputs.operation }} сумму
 
 on:
   workflow_dispatch:

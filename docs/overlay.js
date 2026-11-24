@@ -9,7 +9,9 @@ const photo = document.getElementById('sign-photo');
 const canvas = document.getElementById('amount-art');
 const painter = photo.decode().then(() => createBudgetPainter(photo, canvas));
 const format = new Intl.NumberFormat('ru-RU');
+const revisionKey = 'vedra-budget:last-confirmed-revision';
 let revision = -1;
+let initialized = false;
 
 function showBudget(amount) {
   const unset = amount === null;
@@ -23,13 +25,35 @@ function showBudget(amount) {
   painter.then((draw) => draw(number.textContent, !currency.hidden)).catch(console.error);
 }
 
+function lastSeenRevision() {
+  try {
+    const stored = localStorage.getItem(revisionKey);
+    const value = Number(stored);
+    if (stored !== null && Number.isSafeInteger(value) && value >= 0) return value;
+  } catch {
+    // Storage can be disabled in browser sources.
+  }
+  return -1;
+}
+
 async function acceptBudget(response) {
-  if (!response.ok) return;
+  if (!response.ok) return false;
   const state = await response.json();
-  if (!Number.isSafeInteger(state.revision) || state.revision <= revision) return;
-  if (state.amount !== null && !Number.isSafeInteger(state.amount)) return;
-  showBudget(state.amount);
-  revision = state.revision;
+  const seen = lastSeenRevision();
+  if (!Number.isSafeInteger(state.revision) || state.revision < Math.max(0, revision, seen)) return false;
+  if (state.amount !== null && !Number.isSafeInteger(state.amount)) return false;
+  if (state.revision > revision) {
+    showBudget(state.amount);
+    revision = state.revision;
+    if (revision > seen) {
+      try {
+        localStorage.setItem(revisionKey, String(revision));
+      } catch {
+        // The current page still rejects older revisions in memory.
+      }
+    }
+  }
+  return true;
 }
 
 async function refreshRaw() {
@@ -44,8 +68,8 @@ async function refreshRaw() {
 }
 
 async function refreshApi() {
-  // Raw GitHub files can lag behind branch updates. Check the Contents API
-  // separately while staying below its public rate limit from a single source.
+  // The uncached Contents API read must complete before the CDN can feed the widget.
+  // A reload otherwise gives an older, faster CDN response a blank slate.
   let nextCheck = 75000;
   try {
     apiUrl.searchParams.set('read', Date.now());
@@ -58,16 +82,20 @@ async function refreshApi() {
       const retryAfter = Number(response.headers.get('Retry-After')) * 1000;
       const resetAt = Number(response.headers.get('X-RateLimit-Reset')) * 1000;
       nextCheck = Math.max(nextCheck, retryAfter || 0, resetAt - Date.now() + 1000);
-    } else {
-      await acceptBudget(response);
+    } else if (await acceptBudget(response)) {
+      if (!initialized) {
+        initialized = true;
+        refreshRaw();
+      }
+    } else if (!initialized) {
+      nextCheck = 12000;
     }
   } catch {
-    // The raw file remains available as a fallback.
+    if (!initialized) nextCheck = 12000;
   } finally {
     setTimeout(refreshApi, nextCheck);
   }
 }
 
 showBudget(null);
-refreshRaw();
 refreshApi();

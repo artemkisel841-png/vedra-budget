@@ -1,0 +1,36 @@
+name: Изменить сумму «ВЕДРА»
+run-name: ${{ inputs.operation }} ${{ inputs.amount }} ₽ · ${{ github.actor }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Действие
+        required: true
+        type: choice
+        options:
+          - Установить
+          - Прибавить
+          - Вычесть
+      amount:
+        description: Сумма в целых рублях
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  save-budget:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - name: Сохранить сумму
+        run: node scripts/update-budget.mjs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUDGET_OPERATION: ${{ inputs.operation }}
+          BUDGET_VALUE: ${{ inputs.amount }}
